@@ -42,7 +42,7 @@ def construct_model():
     ***
     :return: model: the initial CNN model
     """
-    model = Sequential()
+    model = Model()
     model.add(Dense(units=64, activation='relu', input_dim=100))
     model.add(Dense(units=10, activation='softmax'))
     model.compile(loss='categorical_crossentropy',
