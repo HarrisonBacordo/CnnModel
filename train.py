@@ -10,10 +10,18 @@ However, you must make sure:
 
 ©2018 Created by Yiming Peng and Bing Xue
 """
-from tensorflow.keras.layers import Input, Activation, Dense, Flatten
+import six
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
+from tensorflow.keras.regularizers import l2
 from tensorflow.keras.layers import (
+    Add,
+    BatchNormalization,
+    Input,
+    Activation,
+    Dense,
+    Flatten,
+    Dropout,
     Conv2D,
     MaxPooling2D,
     AveragePooling2D
@@ -42,12 +50,6 @@ def construct_model():
     ***
     :return: model: the initial CNN model
     """
-    model = Model()
-    model.add(Dense(units=64, activation='relu', input_dim=100))
-    model.add(Dense(units=10, activation='softmax'))
-    model.compile(loss='categorical_crossentropy',
-              optimizer='sgd',
-              metrics=['accuracy'])
     return model
 
 
