@@ -1,51 +1,29 @@
-#!/usr/bin/env python
+#  Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+"""Convolutional Neural Network Estimator for MNIST, built with tf.layers."""
 
-"""Description:
-The train.py is to build your CNN model, train the model, and save it for later evaluation(marking)
-This is just a simple template, you feel free to change it according to your own style.
-However, you must make sure:
-1. Your own model is saved to the directory "model" and named as "model.h5"
-2. The "test.py" must work properly with your model, this will be used by tutors for marking.
-3. If you have added any extra pre-processing steps, please make sure you also implement them in "test.py" so that they can later be applied to test images.
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-©2018 Created by Yiming Peng and Bing Xue
-"""
-
-import glob
 import numpy as np
 import tensorflow as tf
-import random
-from PIL import Image
 
-# Set random seeds to ensure the reproducible results
-SEED = 309
-np.random.seed(SEED)
-random.seed(SEED)
-tf.set_random_seed(SEED)
-strawberry_path = 'data/strawberry/*.jpg'
-cherry_path = 'data/cherry/*.jpg'
-tomato_path = 'data/tomato/*.jpg'
-
-
-def load_data():
-    strawberry_list = glob.glob(strawberry_path)
-    cherry_list = glob.glob(cherry_path)
-    tomato_list = glob.glob(tomato_path)
-    strawberry_data = np.array([np.array(Image.open(fname)) for fname in strawberry_list])
+tf.logging.set_verbosity(tf.logging.INFO)
 
 
 def cnn_model_fn(features, labels, mode):
-    """
-    Construct the CNN model.
-    ***
-        Please add your model implementation here, and don't forget compile the model
-        E.g., model.compile(loss='categorical_crossentropy',
-                            optimizer='sgd',
-                            metrics=['accuracy'])
-        NOTE, You must include 'accuracy' in as one of your metrics, which will be used for marking later.
-    ***
-    :return: model: the initial CNN model
-    """
     """Model function for CNN."""
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
@@ -135,36 +113,6 @@ def cnn_model_fn(features, labels, mode):
             labels=labels, predictions=predictions["classes"])}
     return tf.estimator.EstimatorSpec(
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
-
-
-def train_model(model):
-    """
-    Train the CNN model
-    ***
-        Please add your training implementation here, including pre-processing and training
-    ***
-    :param model: the initial CNN model
-    :return:model:   the trained CNN model
-    """
-    # Add your code here
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        
-    return model
-
-
-def save_model(model):
-    """
-    Save the keras model for later evaluation
-    :param model: the trained CNN model
-    :return:
-    """
-    # ***
-    #   Please remove the comment to enable model save.
-    #   However, it will overwrite the baseline model we provided.
-    # ***
-    # model.save("model/model.h5")
-    print("Model Saved Successfully.")
 
 
 def main(unused_argv):
