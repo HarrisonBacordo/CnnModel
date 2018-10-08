@@ -27,36 +27,24 @@ cherry_path = 'data/cherry/*.jpg'
 tomato_path = 'data/tomato/*.jpg'
 
 
-def load_data():
-    strawberry_list = glob.glob(strawberry_path)
-    cherry_list = glob.glob(cherry_path)
-    tomato_list = glob.glob(tomato_path)
-    strawberry_data = np.array([np.array(Image.open(fname)) for fname in strawberry_list])
+tf.logging.set_verbosity(tf.logging.INFO)
 
 
+# FIXME! Diverge NaN loss error
 def cnn_model_fn(features, labels, mode):
-    """
-    Construct the CNN model.
-    ***
-        Please add your model implementation here, and don't forget compile the model
-        E.g., model.compile(loss='categorical_crossentropy',
-                            optimizer='sgd',
-                            metrics=['accuracy'])
-        NOTE, You must include 'accuracy' in as one of your metrics, which will be used for marking later.
-    ***
-    :return: model: the initial CNN model
-    """
     """Model function for CNN."""
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
     # MNIST images are 28x28 pixels, and have one color channel
-    input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
+    inputs = tf.image.resize_images(features["x"], (28, 28))
+    inputs = tf.image.rgb_to_grayscale(inputs)
+    input_layer = tf.reshape(inputs, [-1, 28, 28, 1])
 
     # Convolutional Layer #1
     # Computes 32 features using a 5x5 filter with ReLU activation.
     # Padding is added to preserve width and height.
-    # Input Tensor Shape: [batch_size, 28, 28, 1]
-    # Output Tensor Shape: [batch_size, 28, 28, 32]
+    # Input Tensor Shape: [batch_size, 300, 300, 1]
+    # Output Tensor Shape: [batch_size, 300, 300, 32]
     conv1 = tf.layers.conv2d(
         inputs=input_layer,
         filters=32,
@@ -66,15 +54,15 @@ def cnn_model_fn(features, labels, mode):
 
     # Pooling Layer #1
     # First max pooling layer with a 2x2 filter and stride of 2
-    # Input Tensor Shape: [batch_size, 28, 28, 32]
-    # Output Tensor Shape: [batch_size, 14, 14, 32]
+    # Input Tensor Shape: [batch_size, 300, 300, 10]
+    # Output Tensor Shape: [batch_size, 100, 100, 10]
     pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
 
     # Convolutional Layer #2
     # Computes 64 features using a 5x5 filter.
     # Padding is added to preserve width and height.
-    # Input Tensor Shape: [batch_size, 14, 14, 32]
-    # Output Tensor Shape: [batch_size, 14, 14, 64]
+    # Input Tensor Shape: [batch_size, 100, 100, 10]
+    # Output Tensor Shape: [batch_size, 100, 100, 20]
     conv2 = tf.layers.conv2d(
         inputs=pool1,
         filters=64,
@@ -84,8 +72,8 @@ def cnn_model_fn(features, labels, mode):
 
     # Pooling Layer #2
     # Second max pooling layer with a 2x2 filter and stride of 2
-    # Input Tensor Shape: [batch_size, 14, 14, 64]
-    # Output Tensor Shape: [batch_size, 7, 7, 64]
+    # Input Tensor Shape: [batch_size, 100, 100, 64]
+    # Output Tensor Shape: [batch_size, 50, 50, 64]
     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
     # Flatten tensor into a batch of vectors
@@ -105,8 +93,8 @@ def cnn_model_fn(features, labels, mode):
 
     # Logits layer
     # Input Tensor Shape: [batch_size, 1024]
-    # Output Tensor Shape: [batch_size, 10]
-    logits = tf.layers.dense(inputs=dropout, units=10)
+    # Output Tensor Shape: [batch_size, 3]
+    logits = tf.layers.dense(inputs=dropout, units=3)
 
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
@@ -123,7 +111,7 @@ def cnn_model_fn(features, labels, mode):
 
     # Configure the Training Op (for TRAIN mode)
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.000000001)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
@@ -135,6 +123,24 @@ def cnn_model_fn(features, labels, mode):
             labels=labels, predictions=predictions["classes"])}
     return tf.estimator.EstimatorSpec(
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+
+
+def load_data():
+    strawberry_list = glob.glob(strawberry_path)
+    cherry_list = glob.glob(cherry_path)
+    tomato_list = glob.glob(tomato_path)
+    labels = list()
+    strawberry_data = np.array([np.array(Image.open(fname).convert("RGB")) for fname in strawberry_list])
+    cherry_data = np.array([np.array(Image.open(fname).convert("RGB")) for fname in cherry_list])
+    tomato_data = np.array([np.array(Image.open(fname).convert("RGB")) for fname in tomato_list])
+    data = np.concatenate((strawberry_data, cherry_data, tomato_data))
+    for i in range(1, 4):
+        labels += [i] * 1500
+    return data.astype(np.float32), np.array(labels)
+
+
+def preprocess_data(data, labels):
+    return data, labels
 
 
 def train_model(model):
@@ -169,16 +175,13 @@ def save_model(model):
 
 def main(unused_argv):
     # Load training and eval data
-    mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-    train_data = mnist.train.images  # Returns np.array
-    train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-    eval_data = mnist.test.images  # Returns np.array
-    eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-    print(train_labels)
-
+    data, labels = load_data()
+    train_data, train_labels = preprocess_data(data, labels)
     # Create the Estimator
-    mnist_classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="/tmp/mnist_convnet_model")
+    # classifier = tf.estimator.Estimator(
+    #     model_fn=cnn_model_fn, model_dir="/tmp/cnn")
+    classifier = tf.estimator.Estimator(
+        model_fn=cnn_model_fn)
 
     # Set up logging for predictions
     # Log the values in the "Softmax" tensor with label "probabilities"
@@ -193,19 +196,10 @@ def main(unused_argv):
         batch_size=100,
         num_epochs=None,
         shuffle=True)
-    mnist_classifier.train(
+    classifier.train(
         input_fn=train_input_fn,
         steps=20000,
         hooks=[logging_hook])
-
-    # Evaluate the model and print results
-    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": eval_data},
-        y=eval_labels,
-        num_epochs=1,
-        shuffle=False)
-    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
-    print(eval_results)
 
 
 if __name__ == "__main__":
