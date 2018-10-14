@@ -57,12 +57,14 @@ def cnn_model_fn(features, labels, mode):
         inputs = tf.image.random_flip_left_right(inputs)
         inputs = tf.image.random_flip_up_down(inputs)
 
-    # Convolutional block
+    # # Convolutional block
     inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=11, strides=4, padding='valid', activation=tf.nn.relu)
     inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
     inputs = tf.layers.conv2d(inputs, filters=192, kernel_size=5, strides=1, padding='valid', activation=tf.nn.relu)
     inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
     inputs = tf.layers.conv2d(inputs, filters=384, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
     inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
     inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
     inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
@@ -113,23 +115,23 @@ def main(unused_argv):
 
     # Create the Estimator
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="chkpts/81er")
+        model_fn=cnn_model_fn, model_dir="chkpts")
 
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
         tensors=tensors_to_log, every_n_iter=50)
     # Train the model
-    # train_input_fn = tf.estimator.inputs.numpy_input_fn(
-    #     x={"x": train_data},
-    #     y=train_labels,
-    #     batch_size=BATCH_SIZE,
-    #     num_epochs=None,
-    #     shuffle=True)
-    # classifier.train(
-    #     input_fn=train_input_fn,
-    #     steps=4000,
-    #     hooks=[logging_hook])
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": train_data},
+        y=train_labels,
+        batch_size=BATCH_SIZE,
+        num_epochs=None,
+        shuffle=True)
+    classifier.train(
+        input_fn=train_input_fn,
+        steps=4000,
+        hooks=[logging_hook])
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": validation_data},
