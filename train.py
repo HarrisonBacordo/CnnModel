@@ -27,9 +27,9 @@ strawberry_path = 'data/strawberry/*.jpg'
 cherry_path = 'data/cherry/*.jpg'
 tomato_path = 'data/tomato/*.jpg'
 
-NUM_OUTPUTS = 3
+NUM_CLASSES = 3
 INIT_LEARN_RATE = 0.0001
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -53,29 +53,61 @@ def cnn_model_fn(features, labels, mode):
     # Input Layer
     inputs = tf.image.resize_images(features["x"], (254, 254))
     if mode == tf.estimator.ModeKeys.TRAIN:
-        inputs = tf.random_crop(inputs, [tf.shape(inputs)[0], 227, 227, 3])
+        inputs = tf.random_crop(inputs, [tf.shape(inputs)[0], 224, 224, 3])
         inputs = tf.image.random_flip_left_right(inputs)
         inputs = tf.image.random_flip_up_down(inputs)
 
-    # # Convolutional block
-    inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=11, strides=4, padding='valid', activation=tf.nn.relu)
-    inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
-    inputs = tf.layers.conv2d(inputs, filters=192, kernel_size=5, strides=1, padding='valid', activation=tf.nn.relu)
-    inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
-    inputs = tf.layers.conv2d(inputs, filters=384, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
-    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
-    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
-    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
-    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
-    inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
+    # # # Convolutional block
+    # inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=11, strides=4, padding='valid', activation=tf.nn.relu)
+    # inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
+    # inputs = tf.layers.conv2d(inputs, filters=192, kernel_size=5, strides=1, padding='valid', activation=tf.nn.relu)
+    # inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
+    # inputs = tf.layers.conv2d(inputs, filters=384, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
+    # inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
+    # inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='same', activation=tf.nn.relu)
+    # inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
+    #
+    # # fully connected block
+    # inputs = tf.layers.flatten(inputs)
+    # inputs = tf.layers.dropout(inputs, rate=0.5)
+    # inputs = tf.layers.dense(inputs, units=2048, activation=tf.nn.relu)
+    # inputs = tf.layers.dropout(inputs, rate=0.5)
+    # inputs = tf.layers.dense(inputs, units=2048, activation=tf.nn.relu)
+    # logits = tf.layers.dense(inputs, NUM_CLASSES)
 
-    # fully connected block
+    inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.max_pooling2d(inputs, pool_size=2, strides=2)
+
+    inputs = tf.layers.conv2d(inputs, filters=128, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=128, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.max_pooling2d(inputs, pool_size=2, strides=2)
+
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=256, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.max_pooling2d(inputs, pool_size=2, strides=2)
+
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.max_pooling2d(inputs, pool_size=2, strides=2)
+
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.conv2d(inputs, filters=512, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
+    inputs = tf.layers.max_pooling2d(inputs, pool_size=2, strides=2)
+
     inputs = tf.layers.flatten(inputs)
-    inputs = tf.layers.dropout(inputs, rate=0.5)
-    inputs = tf.layers.dense(inputs, units=4096, activation=tf.nn.relu)
-    inputs = tf.layers.dropout(inputs, rate=0.5)
-    inputs = tf.layers.dense(inputs, units=4096, activation=tf.nn.relu)
-    logits = tf.layers.dense(inputs, NUM_OUTPUTS)
+    inputs = tf.layers.dense(inputs, 4096, activation=tf.nn.relu)
+    inputs = tf.layers.dropout(inputs, 0.5)
+    inputs = tf.layers.dense(inputs, 4096, activation=tf.nn.relu)
+    inputs = tf.layers.dropout(inputs, 0.5)
+    logits = tf.layers.dense(inputs, NUM_CLASSES)
+
 
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
@@ -122,20 +154,21 @@ def main(unused_argv):
     logging_hook = tf.train.LoggingTensorHook(
         tensors=tensors_to_log, every_n_iter=50)
     # Train the model
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": train_data},
-        y=train_labels,
-        batch_size=BATCH_SIZE,
-        num_epochs=None,
-        shuffle=True)
-    classifier.train(
-        input_fn=train_input_fn,
-        steps=4000,
-        hooks=[logging_hook])
+    # train_input_fn = tf.estimator.inputs.numpy_input_fn(
+    #     x={"x": train_data},
+    #     y=train_labels,
+    #     batch_size=BATCH_SIZE,
+    #     num_epochs=None,
+    #     shuffle=True)
+    # classifier.train(
+    #     input_fn=train_input_fn,
+    #     steps=4000,
+    #     hooks=[logging_hook])
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": validation_data},
         y=validation_labels,
+        batch_size=64,
         num_epochs=1,
         shuffle=False)
     eval_results = classifier.evaluate(input_fn=eval_input_fn)

@@ -101,7 +101,7 @@ def evaluate(X_test, y_test):
     batch_size = 16
     # Create the Estimator
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="chkpts/81er")
+        model_fn=cnn_model_fn, model_dir="chkpts")
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": X_test},
