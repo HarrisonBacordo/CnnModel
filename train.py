@@ -57,6 +57,7 @@ def cnn_model_fn(features, labels, mode):
         inputs = tf.image.random_flip_left_right(inputs)
         inputs = tf.image.random_flip_up_down(inputs)
 
+    ####################### ALEX NET ##################################
     # # # Convolutional block
     # inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=11, strides=4, padding='valid', activation=tf.nn.relu)
     # inputs = tf.layers.max_pooling2d(inputs, pool_size=3, strides=2)
@@ -70,10 +71,11 @@ def cnn_model_fn(features, labels, mode):
     # # fully connected block
     # inputs = tf.layers.flatten(inputs)
     # inputs = tf.layers.dropout(inputs, rate=0.5)
-    # inputs = tf.layers.dense(inputs, units=2048, activation=tf.nn.relu)
+    # inputs = tf.layers.dense(inputs, units=4096, activation=tf.nn.relu)
     # inputs = tf.layers.dropout(inputs, rate=0.5)
-    # inputs = tf.layers.dense(inputs, units=2048, activation=tf.nn.relu)
+    # inputs = tf.layers.dense(inputs, units=4096, activation=tf.nn.relu)
     # logits = tf.layers.dense(inputs, NUM_CLASSES)
+    ########################################################################
 
     inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
     inputs = tf.layers.conv2d(inputs, filters=64, kernel_size=3, strides=1, padding='SAME', activation=tf.nn.relu)
@@ -108,7 +110,6 @@ def cnn_model_fn(features, labels, mode):
     inputs = tf.layers.dropout(inputs, 0.5)
     logits = tf.layers.dense(inputs, NUM_CLASSES)
 
-
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
         "classes": tf.argmax(input=logits, axis=1),
@@ -139,15 +140,25 @@ def cnn_model_fn(features, labels, mode):
 
 
 def main(unused_argv):
+    """
+    # USE THIS IF NUMPY FILE SAVED ON COMPUTER
     # Load training and validation data
-    train_data = np.load("data/train/train_data.npy")
-    train_labels = np.load("data/train/train_labels.npy")
-    validation_data = np.load("data/train/validation_data.npy")
-    validation_labels = np.load("data/train/validation_labels.npy")
+    # train_data = np.load("data/train/train_data.npy")
+    # train_labels = np.load("data/train/train_labels.npy")
+    # validation_data = np.load("data/train/validation_data.npy")
+    # validation_labels = np.load("data/train/validation_labels.npy")
+    """
+
+    # USE THIS IF NUMPY FILE NOT SAVED ON COMPUTER
+    # Load training and validation data
+    data, labels = load_data()
+    rand = np.random.permutation(labels.size)
+    data, labels = data[rand], labels[rand]
+    train_data, train_labels, validation_data, validation_labels = data[:4000], labels[:4000], data[4000:], labels[4000:]
 
     # Create the Estimator
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="chkpts")
+        model_fn=cnn_model_fn, model_dir="chkpts/87er")
 
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
